@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chad's Curiosities</title>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #faf6f1;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+        }
+
+        .mind-map {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        svg.connections {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .connections path {
+            fill: none;
+            stroke-width: 3;
+            stroke-linecap: round;
+            opacity: 0.7;
+            transition: opacity 0.3s ease, stroke-width 0.3s ease;
+        }
+
+        .center-node {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            z-index: 10;
+            transition: transform 0.3s ease;
+        }
+
+        .center-node:hover {
+            transform: translate(-50%, -50%) scale(1.05);
+        }
+
+        .headshot {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid #d4c4b5;
+            box-shadow: 0 8px 32px rgba(139, 119, 101, 0.25);
+            transition: box-shadow 0.3s ease;
+        }
+
+        .center-node:hover .headshot {
+            box-shadow: 0 12px 40px rgba(139, 119, 101, 0.35);
+        }
+
+        .center-name {
+            font-family: 'Caveat', cursive;
+            font-size: 1.8rem;
+            color: #5c4a3d;
+            font-weight: 600;
+            margin-top: 12px;
+        }
+
+        .center-title {
+            font-family: 'Caveat', cursive;
+            font-size: 1.3rem;
+            color: #8b7b6b;
+            font-weight: 400;
+            margin-top: 2px;
+        }
+
+        .center-tagline {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.75rem;
+            color: #a89888;
+            font-weight: 300;
+            font-style: italic;
+            margin-top: 6px;
+            letter-spacing: 0.02em;
+        }
+
+        .branch-node {
+            position: absolute;
+            padding: 14px 24px;
+            border-radius: 30px;
+            font-family: 'Caveat', cursive;
+            font-size: 1.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            z-index: 5;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+            white-space: nowrap;
+        }
+
+        .branch-node:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        }
+
+        .branch-node.active {
+            transform: scale(1.15);
+        }
+
+        /* Individual branch colors - warm, organic palette */
+        .branch-node[data-branch="curiosities"] {
+            background: linear-gradient(145deg, #f4a574, #e8956a);
+            color: #5c3d2e;
+        }
+        .branch-node[data-branch="ai"] {
+            background: linear-gradient(145deg, #7eb8c9, #6ba8b9);
+            color: #2d4a52;
+        }
+        .branch-node[data-branch="hospitality"] {
+            background: linear-gradient(145deg, #d4a574, #c49564);
+            color: #4a3728;
+        }
+        .branch-node[data-branch="golf"] {
+            background: linear-gradient(145deg, #98c4a0, #88b490);
+            color: #2d4a35;
+        }
+        .branch-node[data-branch="family"] {
+            background: linear-gradient(145deg, #e8b4b4, #d8a4a4);
+            color: #5c3d3d;
+        }
+        .branch-node[data-branch="books"] {
+            background: linear-gradient(145deg, #c4a4d4, #b494c4);
+            color: #4a3852;
+        }
+        .branch-node[data-branch="cooking"] {
+            background: linear-gradient(145deg, #e4c474, #d4b464);
+            color: #52452d;
+        }
+        .branch-node[data-branch="dj"] {
+            background: linear-gradient(145deg, #f4948c, #e4847c);
+            color: #5c2d2d;
+        }
+        .branch-node[data-branch="biohacking"] {
+            background: linear-gradient(145deg, #84c4b4, #74b4a4);
+            color: #2d524a;
+        }
+        .branch-node[data-branch="ventures"] {
+            background: linear-gradient(145deg, #a4b4d4, #94a4c4);
+            color: #3d4252;
+        }
+        .branch-node[data-branch="follow"] {
+            background: linear-gradient(145deg, #e8c4a4, #d8b494);
+            color: #4a3d2d;
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: absolute;
+            background: rgba(107, 91, 79, 0.95);
+            color: #faf6f1;
+            padding: 12px 18px;
+            border-radius: 12px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            max-width: 250px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 100;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .tooltip.visible {
+            opacity: 1;
+        }
+
+        /* Note Card Panel */
+        .note-card {
+            position: fixed;
+            right: -420px;
+            top: 50%;
+            transform: translateY(-50%) rotate(1deg);
+            width: 380px;
+            background: linear-gradient(175deg, #fefcf8 0%, #f8f4eb 50%, #f5f0e6 100%);
+            padding: 32px 28px;
+            z-index: 200;
+            transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s ease;
+            font-family: 'Inter', sans-serif;
+
+            /* Torn paper / imperfect edges effect */
+            clip-path: polygon(
+                0% 2%, 3% 0%, 8% 1%, 15% 0%, 22% 2%, 30% 0%, 38% 1%, 45% 0%,
+                52% 2%, 60% 0%, 68% 1%, 75% 0%, 82% 2%, 90% 0%, 95% 1%, 100% 0%,
+                100% 98%, 97% 100%, 92% 99%, 85% 100%, 78% 98%, 70% 100%,
+                62% 99%, 55% 100%, 48% 98%, 40% 100%, 32% 99%, 25% 100%,
+                18% 98%, 10% 100%, 5% 99%, 0% 100%
+            );
+
+            /* Layered shadows for depth */
+            box-shadow:
+                -4px 4px 8px rgba(139, 119, 101, 0.15),
+                -8px 8px 20px rgba(139, 119, 101, 0.1),
+                -2px 2px 4px rgba(139, 119, 101, 0.2);
+        }
+
+        .note-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                repeating-linear-gradient(
+                    0deg,
+                    transparent,
+                    transparent 27px,
+                    rgba(200, 180, 160, 0.2) 27px,
+                    rgba(200, 180, 160, 0.2) 28px
+                );
+            pointer-events: none;
+            opacity: 0.5;
+        }
+
+        .note-card.visible {
+            right: 30px;
+            transform: translateY(-50%) rotate(-0.5deg);
+        }
+
+        .note-card-close {
+            position: absolute;
+            top: 12px;
+            right: 16px;
+            width: 32px;
+            height: 32px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-family: 'Caveat', cursive;
+            font-size: 1.8rem;
+            color: #a89080;
+            transition: color 0.2s ease, transform 0.2s ease;
+            z-index: 10;
+        }
+
+        .note-card-close:hover {
+            color: #6b5b4f;
+            transform: scale(1.1) rotate(90deg);
+        }
+
+        .note-card-accent {
+            position: absolute;
+            top: 0;
+            left: 28px;
+            width: 6px;
+            height: 100%;
+            opacity: 0.6;
+            border-radius: 0 0 3px 3px;
+        }
+
+        .note-card-title {
+            font-family: 'Caveat', cursive;
+            font-size: 2.2rem;
+            font-weight: 600;
+            color: #5c4a3d;
+            margin-bottom: 16px;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .note-card-image {
+            width: 100%;
+            height: 140px;
+            background: linear-gradient(145deg, #e8e0d5, #ddd5ca);
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 2px dashed #c4b8a8;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .note-card-image svg {
+            width: 48px;
+            height: 48px;
+            fill: #b8a898;
+        }
+
+        .note-card-image span {
+            position: absolute;
+            bottom: 10px;
+            font-size: 0.75rem;
+            color: #a89888;
+            font-style: italic;
+        }
+
+        .note-card-description {
+            font-size: 0.95rem;
+            line-height: 1.7;
+            color: #6b5b4f;
+            margin-bottom: 24px;
+            padding-left: 20px;
+            font-weight: 300;
+        }
+
+        .note-card-description em {
+            color: #8b7b6b;
+            font-style: italic;
+        }
+
+        .note-card-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Caveat', cursive;
+            font-size: 1.3rem;
+            color: #7a9a8a;
+            text-decoration: none;
+            padding-left: 20px;
+            transition: color 0.2s ease, gap 0.2s ease;
+        }
+
+        .note-card-link:hover {
+            color: #5a7a6a;
+            gap: 12px;
+        }
+
+        .note-card-link::after {
+            content: '\2192';
+            transition: transform 0.2s ease;
+        }
+
+        .note-card-link:hover::after {
+            transform: translateX(4px);
+        }
+
+        /* Email signup form */
+        .signup-form {
+            margin-bottom: 20px;
+        }
+
+        .signup-input {
+            width: 100%;
+            padding: 14px 16px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            border: 2px dashed #c4b8a8;
+            border-radius: 8px;
+            background: linear-gradient(145deg, #fefcf8, #f8f4eb);
+            color: #5c4a3d;
+            margin-bottom: 12px;
+            transition: border-color 0.2s ease, background 0.2s ease;
+        }
+
+        .signup-input:focus {
+            outline: none;
+            border-color: #a89078;
+            border-style: solid;
+            background: #fff;
+        }
+
+        .signup-input::placeholder {
+            color: #b8a898;
+            font-style: italic;
+        }
+
+        .signup-button {
+            width: 100%;
+            padding: 14px 20px;
+            font-family: 'Caveat', cursive;
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #faf6f1;
+            background: linear-gradient(145deg, #8b7b6b, #7a6a5a);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 4px 12px rgba(107, 91, 79, 0.25);
+        }
+
+        .signup-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(107, 91, 79, 0.35);
+        }
+
+        .signup-button:active {
+            transform: translateY(0);
+        }
+
+        .substack-link {
+            display: block;
+            text-align: center;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+            color: #a89078;
+            text-decoration: none;
+            margin-top: 16px;
+            transition: color 0.2s ease;
+        }
+
+        .substack-link:hover {
+            color: #6b5b4f;
+            text-decoration: underline;
+        }
+
+        /* Hide image placeholder when showing form */
+        .note-card.show-form .note-card-image {
+            display: none;
+        }
+
+        .note-card .signup-form {
+            display: none;
+        }
+
+        .note-card.show-form .signup-form {
+            display: block;
+        }
+
+        /* QR Code corner element */
+        .qr-corner {
+            position: fixed;
+            bottom: 24px;
+            right: 28px;
+            z-index: 50;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+
+        .qr-link {
+            display: block;
+            text-decoration: none;
+            transition: transform 0.3s ease;
+        }
+
+        .qr-link:hover {
+            transform: scale(1.05) rotate(-1deg);
+        }
+
+        .qr-image {
+            width: 72px;
+            height: 72px;
+            border: 2px solid #d4c8b8;
+            border-radius: 4px;
+            opacity: 0.5;
+            filter: sepia(25%) contrast(90%) brightness(1.05);
+            box-shadow:
+                2px 3px 8px rgba(107, 91, 79, 0.15),
+                0 1px 2px rgba(107, 91, 79, 0.1);
+            transition: opacity 0.3s ease, filter 0.3s ease;
+        }
+
+        .qr-link:hover .qr-image {
+            opacity: 0.8;
+            filter: sepia(10%) contrast(100%);
+        }
+
+        .qr-caption {
+            font-family: 'Caveat', cursive;
+            font-size: 0.85rem;
+            color: #a89888;
+            margin-top: 6px;
+            transform: rotate(-3deg);
+            opacity: 0.7;
+            letter-spacing: 0.02em;
+        }
+
+        /* Tape effect at top */
+        .note-card-tape {
+            position: absolute;
+            top: -8px;
+            left: 50%;
+            transform: translateX(-50%) rotate(-2deg);
+            width: 80px;
+            height: 28px;
+            background: linear-gradient(180deg, rgba(255, 248, 220, 0.9), rgba(245, 235, 200, 0.85));
+            border-radius: 2px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Dim the mind map when card is open */
+        .mind-map.card-open .branch-node:not(.active),
+        .mind-map.card-open .center-node,
+        .mind-map.card-open .connections path:not([style*="opacity: 1"]) {
+            opacity: 0.4;
+            transition: opacity 0.3s ease;
+        }
+
+        /* Pulse animation for center */
+        @keyframes gentle-pulse {
+            0%, 100% { box-shadow: 0 8px 32px rgba(139, 119, 101, 0.25); }
+            50% { box-shadow: 0 12px 44px rgba(139, 119, 101, 0.4); }
+        }
+
+        .headshot {
+            animation: gentle-pulse 4s ease-in-out infinite;
+        }
+
+        /* Floating animation for branches */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .branch-node {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .branch-node:nth-child(odd) {
+            animation-delay: -1.5s;
+        }
+
+        .branch-node:hover {
+            animation-play-state: paused;
+        }
+
+        /* Hand-drawn effect on connections */
+        .connections path {
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+            animation: draw 2s ease forwards;
+        }
+
+        @keyframes draw {
+            to { stroke-dashoffset: 0; }
+        }
+
+        .connections path:nth-child(1) { animation-delay: 0.1s; }
+        .connections path:nth-child(2) { animation-delay: 0.2s; }
+        .connections path:nth-child(3) { animation-delay: 0.3s; }
+        .connections path:nth-child(4) { animation-delay: 0.4s; }
+        .connections path:nth-child(5) { animation-delay: 0.5s; }
+        .connections path:nth-child(6) { animation-delay: 0.6s; }
+        .connections path:nth-child(7) { animation-delay: 0.7s; }
+        .connections path:nth-child(8) { animation-delay: 0.8s; }
+        .connections path:nth-child(9) { animation-delay: 0.9s; }
+        .connections path:nth-child(10) { animation-delay: 1.0s; }
+    </style>
+</head>
+<body>
+    <div class="mind-map">
+        <svg class="connections" id="connections"></svg>
+
+        <div class="center-node" id="center">
+            <img src="ChadFace.jpeg" alt="Chad McCormick" class="headshot">
+            <span class="center-name">Chad McCormick</span>
+            <span class="center-title">Chad's Curiosities</span>
+            <span class="center-tagline">Things I didn't mean to think about</span>
+        </div>
+
+        <div class="branch-node" data-branch="curiosities">Current Curiosities</div>
+        <div class="branch-node" data-branch="ai">AI</div>
+        <div class="branch-node" data-branch="hospitality">Hospitality</div>
+        <div class="branch-node" data-branch="golf">Golf</div>
+        <div class="branch-node" data-branch="family">Family</div>
+        <div class="branch-node" data-branch="books">Books</div>
+        <div class="branch-node" data-branch="cooking">Cooking</div>
+        <div class="branch-node" data-branch="dj">DJ</div>
+        <div class="branch-node" data-branch="biohacking">Biohacking</div>
+        <div class="branch-node" data-branch="ventures">New Ventures</div>
+        <div class="branch-node" data-branch="follow">Follow Along</div>
+
+        <div class="tooltip" id="tooltip"></div>
+
+        <!-- Note Card Panel -->
+        <div class="note-card" id="noteCard">
+            <div class="note-card-tape"></div>
+            <div class="note-card-accent" id="cardAccent"></div>
+            <button class="note-card-close" id="cardClose">&times;</button>
+            <h2 class="note-card-title" id="cardTitle">Title</h2>
+            <div class="note-card-image">
+                <svg viewBox="0 0 24 24">
+                    <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+                </svg>
+                <span>image placeholder</span>
+            </div>
+            <div class="signup-form" id="signupForm">
+                <form id="substackForm" action="https://chadmccormick.substack.com/api/v1/free" method="post" target="hiddenFrame">
+                    <input type="email" class="signup-input" id="emailInput" name="email" placeholder="your@email.com" required>
+                    <input type="hidden" name="first_url" value="https://chadmccormick.substack.com/">
+                    <input type="hidden" name="first_referrer" value="">
+                    <input type="hidden" name="current_url" value="https://chadmccormick.substack.com/">
+                    <input type="hidden" name="current_referrer" value="">
+                    <input type="hidden" name="referral_code" value="">
+                    <input type="hidden" name="source" value="embed">
+                    <button type="submit" class="signup-button" id="subscribeBtn">Subscribe</button>
+                </form>
+                <a href="https://chadmccormick.substack.com" target="_blank" rel="noopener" class="substack-link">or subscribe on Substack</a>
+                <iframe name="hiddenFrame" style="display:none;"></iframe>
+            </div>
+            <p class="note-card-description" id="cardDescription">
+                <em>Description placeholder...</em>
+            </p>
+            <a href="#" class="note-card-link" id="cardLink">Learn more</a>
+        </div>
+
+        <!-- QR Code Corner -->
+        <div class="qr-corner">
+            <a href="https://chadmccormick.substack.com" target="_blank" rel="noopener" class="qr-link" title="Subscribe on Substack">
+                <img src="qr-substack.png" alt="QR Code to Substack" class="qr-image">
+            </a>
+            <span class="qr-caption">note to self</span>
+        </div>
+    </div>
+
+    <script>
+        const branches = [
+            { id: 'curiosities', angle: -90, distance: 360, color: '#f4a574' },
+            { id: 'ai', angle: -57, distance: 380, color: '#7eb8c9' },
+            { id: 'hospitality', angle: -24, distance: 365, color: '#d4a574' },
+            { id: 'golf', angle: 9, distance: 370, color: '#98c4a0' },
+            { id: 'family', angle: 42, distance: 375, color: '#e8b4b4' },
+            { id: 'books', angle: 75, distance: 355, color: '#c4a4d4' },
+            { id: 'cooking', angle: 108, distance: 370, color: '#e4c474' },
+            { id: 'dj', angle: 141, distance: 360, color: '#f4948c' },
+            { id: 'biohacking', angle: 174, distance: 380, color: '#84c4b4' },
+            { id: 'ventures', angle: 207, distance: 365, color: '#a4b4d4' },
+            { id: 'follow', angle: 240, distance: 358, color: '#e8c4a4' }
+        ];
+
+        const tooltips = {
+            curiosities: "What's capturing my attention right now",
+            ai: "Exploring the frontier of artificial intelligence",
+            hospitality: "The art of making people feel at home",
+            golf: "Where patience meets precision",
+            family: "The people who matter most",
+            books: "Ideas that shape my thinking",
+            cooking: "Creating with ingredients",
+            dj: "Curating moments through music",
+            biohacking: "Optimizing the human experience",
+            ventures: "Building what's next",
+            follow: "I write about things I didn't mean to think about"
+        };
+
+        // Card content for each branch
+        const cardContent = {
+            curiosities: {
+                title: "Current Curiosities",
+                description: "The rabbit holes I'm currently exploring. These change often as new ideas catch my attention and old questions find their answers. <em>Always learning, always wondering.</em>",
+                color: "#f4a574"
+            },
+            ai: {
+                title: "AI",
+                description: "Fascinated by how artificial intelligence is reshaping everything we know. From language models to creative tools, I'm deeply invested in understanding where this is all heading. <em>The future is being written in code.</em>",
+                color: "#7eb8c9"
+            },
+            hospitality: {
+                title: "Hospitality",
+                description: "There's an art to making people feel welcome, seen, and cared for. Whether it's a restaurant, hotel, or your own home, hospitality is about creating moments that matter. <em>Every interaction is an opportunity.</em>",
+                color: "#d4a574"
+            },
+            golf: {
+                title: "Golf",
+                description: "A game that teaches patience, humility, and the occasional moment of pure joy. It's meditation disguised as sport, best enjoyed with good company. <em>The course always wins, but we keep playing.</em>",
+                color: "#98c4a0"
+            },
+            family: {
+                title: "Family",
+                description: "The people who ground me and remind me what actually matters. Everything else is just details. <em>Home is wherever they are.</em>",
+                color: "#e8b4b4"
+            },
+            books: {
+                title: "Books",
+                description: "Ideas compressed into pages, waiting to reshape how I think. I read widely and take notes obsessively. A good book is a conversation across time. <em>So many books, so little time.</em>",
+                color: "#c4a4d4"
+            },
+            cooking: {
+                title: "Cooking",
+                description: "The kitchen is where creativity meets chemistry. There's something deeply satisfying about transforming raw ingredients into something that brings people together. <em>Food is love made visible.</em>",
+                color: "#e4c474"
+            },
+            dj: {
+                title: "DJ",
+                description: "Music has the power to shift the energy of a room in an instant. Curating the perfect playlist or mix is about reading the moment and knowing what comes next. <em>The right song at the right time changes everything.</em>",
+                color: "#f4948c"
+            },
+            biohacking: {
+                title: "Biohacking",
+                description: "Treating the body as a system that can be understood and optimized. From sleep to nutrition to cold exposure, I'm always experimenting with ways to feel and perform better. <em>Your body keeps the score.</em>",
+                color: "#84c4b4"
+            },
+            ventures: {
+                title: "New Ventures",
+                description: "Ideas that keep me up at night. The intersection of opportunity and passion, where new things get built. Always looking for the next meaningful project. <em>What are we building next?</em>",
+                color: "#a4b4d4"
+            },
+            follow: {
+                title: "Follow Along",
+                description: "I write about things I didn't mean to think about. No schedule. No spam. Just curiosity when it strikes.",
+                color: "#e8c4a4",
+                hasForm: true
+            }
+        };
+
+        function positionBranches() {
+            const centerX = window.innerWidth / 2;
+            const centerY = window.innerHeight / 2;
+            const scaleFactor = Math.min(window.innerWidth, window.innerHeight) / 900;
+
+            branches.forEach(branch => {
+                const node = document.querySelector(`[data-branch="${branch.id}"]`);
+                const angle = branch.angle * (Math.PI / 180);
+                const distance = branch.distance * scaleFactor;
+
+                const x = centerX + Math.cos(angle) * distance;
+                const y = centerY + Math.sin(angle) * distance;
+
+                node.style.left = `${x}px`;
+                node.style.top = `${y}px`;
+                node.style.transform = 'translate(-50%, -50%)';
+            });
+
+            drawConnections();
+        }
+
+        function drawConnections() {
+            const svg = document.getElementById('connections');
+            const centerX = window.innerWidth / 2;
+            const centerY = window.innerHeight / 2;
+            const scaleFactor = Math.min(window.innerWidth, window.innerHeight) / 900;
+
+            svg.innerHTML = '';
+
+            branches.forEach((branch, index) => {
+                const angle = branch.angle * (Math.PI / 180);
+                const distance = branch.distance * scaleFactor;
+
+                const endX = centerX + Math.cos(angle) * distance;
+                const endY = centerY + Math.sin(angle) * distance;
+
+                // Create organic curved path
+                const controlDistance = distance * 0.5;
+                const wobble = (Math.random() - 0.5) * 30;
+                const perpAngle = angle + Math.PI / 2;
+
+                const ctrlX = centerX + Math.cos(angle) * controlDistance + Math.cos(perpAngle) * wobble;
+                const ctrlY = centerY + Math.sin(angle) * controlDistance + Math.sin(perpAngle) * wobble;
+
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.setAttribute('d', `M ${centerX} ${centerY} Q ${ctrlX} ${ctrlY} ${endX} ${endY}`);
+                path.setAttribute('stroke', branch.color);
+                path.setAttribute('data-branch', branch.id);
+
+                svg.appendChild(path);
+            });
+        }
+
+        // Tooltip functionality
+        const tooltip = document.getElementById('tooltip');
+
+        document.querySelectorAll('.branch-node').forEach(node => {
+            node.addEventListener('mouseenter', (e) => {
+                const branch = e.target.dataset.branch;
+                tooltip.textContent = tooltips[branch];
+                tooltip.classList.add('visible');
+            });
+
+            node.addEventListener('mousemove', (e) => {
+                tooltip.style.left = `${e.pageX + 15}px`;
+                tooltip.style.top = `${e.pageY + 15}px`;
+            });
+
+            node.addEventListener('mouseleave', () => {
+                tooltip.classList.remove('visible');
+            });
+
+            node.addEventListener('click', (e) => {
+                const branch = e.target.dataset.branch;
+                // Toggle active state
+                document.querySelectorAll('.branch-node').forEach(n => n.classList.remove('active'));
+                e.target.classList.add('active');
+
+                // Highlight connection
+                document.querySelectorAll('.connections path').forEach(p => {
+                    p.style.opacity = p.dataset.branch === branch ? '1' : '0.3';
+                    p.style.strokeWidth = p.dataset.branch === branch ? '5' : '3';
+                });
+
+                // Show note card
+                showNoteCard(branch);
+            });
+        });
+
+        // Note card elements
+        const noteCard = document.getElementById('noteCard');
+        const cardTitle = document.getElementById('cardTitle');
+        const cardDescription = document.getElementById('cardDescription');
+        const cardAccent = document.getElementById('cardAccent');
+        const cardClose = document.getElementById('cardClose');
+        const cardLink = document.getElementById('cardLink');
+        const mindMap = document.querySelector('.mind-map');
+        const emailInput = document.getElementById('emailInput');
+        const subscribeBtn = document.getElementById('subscribeBtn');
+
+        function showNoteCard(branch) {
+            const content = cardContent[branch];
+            if (!content) return;
+
+            cardTitle.textContent = content.title;
+            cardDescription.innerHTML = content.description;
+            cardAccent.style.backgroundColor = content.color;
+
+            // Toggle form vs image
+            if (content.hasForm) {
+                noteCard.classList.add('show-form');
+                cardLink.style.display = 'none';
+            } else {
+                noteCard.classList.remove('show-form');
+                cardLink.style.display = 'inline-flex';
+            }
+
+            noteCard.classList.add('visible');
+            mindMap.classList.add('card-open');
+        }
+
+        // Subscribe form handler
+        const substackForm = document.getElementById('substackForm');
+
+        substackForm.addEventListener('submit', (e) => {
+            const email = emailInput.value.trim();
+            if (email) {
+                // Show feedback after brief delay to allow form submission
+                setTimeout(() => {
+                    emailInput.value = '';
+                    subscribeBtn.textContent = 'Thanks!';
+                    subscribeBtn.disabled = true;
+                    setTimeout(() => {
+                        subscribeBtn.textContent = 'Subscribe';
+                        subscribeBtn.disabled = false;
+                    }, 2500);
+                }, 100);
+            }
+        });
+
+        function hideNoteCard() {
+            noteCard.classList.remove('visible');
+            mindMap.classList.remove('card-open');
+            document.querySelectorAll('.branch-node').forEach(n => n.classList.remove('active'));
+            document.querySelectorAll('.connections path').forEach(p => {
+                p.style.opacity = '0.7';
+                p.style.strokeWidth = '3';
+            });
+        }
+
+        // Close card events
+        cardClose.addEventListener('click', hideNoteCard);
+
+        // Reset on center click
+        document.getElementById('center').addEventListener('click', hideNoteCard);
+
+        // Close on escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') hideNoteCard();
+        });
+
+        // Close when clicking outside
+        document.addEventListener('click', (e) => {
+            if (noteCard.classList.contains('visible') &&
+                !noteCard.contains(e.target) &&
+                !e.target.classList.contains('branch-node')) {
+                hideNoteCard();
+            }
+        });
+
+        // Initial positioning
+        positionBranches();
+
+        // Reposition on resize
+        window.addEventListener('resize', positionBranches);
+
+        // Add subtle parallax on mouse move
+        document.addEventListener('mousemove', (e) => {
+            const centerX = window.innerWidth / 2;
+            const centerY = window.innerHeight / 2;
+            const moveX = (e.clientX - centerX) / 50;
+            const moveY = (e.clientY - centerY) / 50;
+
+            document.querySelectorAll('.branch-node').forEach((node, index) => {
+                const factor = 1 + (index % 3) * 0.3;
+                node.style.marginLeft = `${moveX * factor}px`;
+                node.style.marginTop = `${moveY * factor}px`;
+            });
+        });
+    </script>
+</body>
+</html>
