@@ -54,4 +54,8 @@ I'm just a bartender. What do I know.
 
 ---
 
+Blame it on me. Everyone else does.
+
+---
+
 Chad
