@@ -171,6 +171,10 @@
             background: linear-gradient(145deg, #e8c4a4, #d8b494);
             color: #4a3d2d;
         }
+        .branch-node[data-branch="beard"] {
+            background: linear-gradient(145deg, #c4a484, #b49474);
+            color: #3d2d1d;
+        }
 
         /* Tooltip */
         .tooltip {
@@ -587,6 +591,7 @@
         <div class="branch-node" data-branch="biohacking">Biohacking</div>
         <div class="branch-node" data-branch="ventures">New Ventures</div>
         <div class="branch-node" data-branch="follow">Follow Along</div>
+        <div class="branch-node" data-branch="beard">Banff Beard Co.</div>
 
         <div class="tooltip" id="tooltip"></div>
 
@@ -634,15 +639,16 @@
     <script>
         const branches = [
             { id: 'curiosities', angle: -90, distance: 360, color: '#f4a574' },
-            { id: 'ai', angle: -57, distance: 380, color: '#7eb8c9' },
-            { id: 'hospitality', angle: -24, distance: 365, color: '#d4a574' },
-            { id: 'golf', angle: 9, distance: 370, color: '#98c4a0' },
-            { id: 'family', angle: 42, distance: 375, color: '#e8b4b4' },
-            { id: 'books', angle: 75, distance: 355, color: '#c4a4d4' },
-            { id: 'cooking', angle: 108, distance: 370, color: '#e4c474' },
-            { id: 'dj', angle: 141, distance: 360, color: '#f4948c' },
-            { id: 'biohacking', angle: 174, distance: 380, color: '#84c4b4' },
-            { id: 'ventures', angle: 207, distance: 365, color: '#a4b4d4' },
+            { id: 'ai', angle: -60, distance: 380, color: '#7eb8c9' },
+            { id: 'hospitality', angle: -30, distance: 365, color: '#d4a574' },
+            { id: 'golf', angle: 0, distance: 370, color: '#98c4a0' },
+            { id: 'family', angle: 30, distance: 375, color: '#e8b4b4' },
+            { id: 'books', angle: 60, distance: 355, color: '#c4a4d4' },
+            { id: 'cooking', angle: 90, distance: 370, color: '#e4c474' },
+            { id: 'dj', angle: 120, distance: 360, color: '#f4948c' },
+            { id: 'biohacking', angle: 150, distance: 380, color: '#84c4b4' },
+            { id: 'ventures', angle: 180, distance: 365, color: '#a4b4d4' },
+            { id: 'beard', angle: 210, distance: 370, color: '#c4a484' },
             { id: 'follow', angle: 240, distance: 358, color: '#e8c4a4' }
         ];
 
@@ -657,6 +663,7 @@
             dj: "Curating moments through music",
             biohacking: "Optimizing the human experience",
             ventures: "Building what's next",
+            beard: "Whether you own one or have one at home",
             follow: "I write about things I didn't mean to think about"
         };
 
@@ -792,7 +799,7 @@
             },
             ventures: {
                 title: "New Ventures",
-                description: "Co-Gen, Data Centers, and Battery Manufacturing in Texas. Energy is the next curiosity.",
+                description: "Co-Gen, Data Centers, Battery Manufacturing in Texas, and Banff Beard Co. Energy and beards—the next curiosities.",
                 color: "#a4b4d4",
                 icon: `<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
                     <path d="M55 15 L40 45 L55 45 L45 85" />
@@ -802,6 +809,22 @@
                     <circle cx="80" cy="25" r="10" />
                     <path d="M80 35 L80 45 M75 40 L85 40" />
                 </svg>`
+            },
+            beard: {
+                title: "Banff Beard Co.",
+                description: "Whether you own a beard or have one at home... Banff Beard Co. is for you.",
+                color: "#c4a484",
+                icon: `<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
+                    <circle cx="50" cy="30" r="18" />
+                    <path d="M32 35 Q25 50 30 70 Q40 85 50 88 Q60 85 70 70 Q75 50 68 35" />
+                    <path d="M40 38 Q45 42 50 38 Q55 42 60 38" />
+                    <circle cx="42" cy="28" r="3" />
+                    <circle cx="58" cy="28" r="3" />
+                    <path d="M35 55 Q50 60 65 55" />
+                    <path d="M38 65 Q50 72 62 65" />
+                    <path d="M42 75 Q50 80 58 75" />
+                </svg>`,
+                link: { text: "Shop", url: "https://banffbeardco.com/" }
             },
             follow: {
                 title: "Follow Along",
@@ -927,7 +950,6 @@
                 cardLink.style.display = 'none';
             } else {
                 noteCard.classList.remove('show-form');
-                cardLink.style.display = 'inline-flex';
 
                 // Display icon if available
                 if (content.icon) {
@@ -936,6 +958,20 @@
                 } else {
                     cardImage.innerHTML = `<svg viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg><span>image placeholder</span>`;
                     cardImage.classList.remove('has-icon');
+                }
+
+                // Handle custom link
+                if (content.link) {
+                    cardLink.textContent = content.link.text;
+                    cardLink.href = content.link.url;
+                    cardLink.target = '_blank';
+                    cardLink.rel = 'noopener';
+                    cardLink.style.display = 'inline-flex';
+                } else {
+                    cardLink.textContent = 'Learn more';
+                    cardLink.href = '#';
+                    cardLink.target = '';
+                    cardLink.style.display = 'inline-flex';
                 }
             }
 
